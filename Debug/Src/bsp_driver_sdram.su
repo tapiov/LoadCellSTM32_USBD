@@ -1,0 +1,6 @@
+bsp_driver_sdram.c:61:9:BSP_SDRAM_Init	0	static
+bsp_driver_sdram.c:77:9:BSP_SDRAM_ReadData	8	static
+bsp_driver_sdram.c:96:9:BSP_SDRAM_ReadData_DMA	8	static
+bsp_driver_sdram.c:115:9:BSP_SDRAM_WriteData	8	static
+bsp_driver_sdram.c:134:9:BSP_SDRAM_WriteData_DMA	8	static
+bsp_driver_sdram.c:151:9:BSP_SDRAM_Sendcmd	8	static

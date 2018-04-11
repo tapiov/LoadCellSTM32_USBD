@@ -1,0 +1,1 @@
+# LoadCellSTM32_USBD

@@ -1,0 +1,16 @@
+usbd_msc_scsi.c:219:16:SCSI_Inquiry	4	static
+usbd_msc_scsi.c:339:15:SCSI_ModeSense6	0	static
+usbd_msc_scsi.c:360:15:SCSI_ModeSense10	0	static
+usbd_msc_scsi.c:383:15:SCSI_RequestSense	4	static
+usbd_msc_scsi.c:445:15:SCSI_StartStopUnit	0	static
+usbd_msc_scsi.c:426:6:SCSI_SenseCode	4	static
+usbd_msc_scsi.c:184:15:SCSI_TestUnitReady	16	static
+usbd_msc_scsi.c:294:15:SCSI_ReadFormatCapacity	24	static
+usbd_msc_scsi.c:258:15:SCSI_ReadCapacity10	16	static
+usbd_msc_scsi.c:651:15:SCSI_CheckAddressRange	8	static
+usbd_msc_scsi.c:672:15:SCSI_ProcessRead	32	static
+usbd_msc_scsi.c:459:15:SCSI_Read10	24	static
+usbd_msc_scsi.c:719:15:SCSI_ProcessWrite	32	static
+usbd_msc_scsi.c:528:15:SCSI_Write10	24	static
+usbd_msc_scsi.c:619:15:SCSI_Verify10	8	static
+usbd_msc_scsi.c:125:8:SCSI_ProcessCmd	8	static
