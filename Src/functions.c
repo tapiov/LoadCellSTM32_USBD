@@ -15,7 +15,7 @@
 #include "stm32f7xx_hal.h"
 #include "cmsis_os.h"
 #include "fatfs.h"
-#include "usb_host.h"
+#include "usb_device.h"
 
 #include "stm32746g_discovery.h"
 #include "stm32746g_discovery_lcd.h"

@@ -5,49 +5,49 @@
   ******************************************************************************
   * This notice applies to any and all portions of this file
   * that are not between comment pairs USER CODE BEGIN and
-  * USER CODE END. Other portions of this file, whether 
+  * USER CODE END. Other portions of this file, whether
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
-  * Copyright (c) 2018 STMicroelectronics International N.V. 
+  * Copyright (c) 2018 STMicroelectronics International N.V.
   * All rights reserved.
   *
-  * Redistribution and use in source and binary forms, with or without 
+  * Redistribution and use in source and binary forms, with or without
   * modification, are permitted, provided that the following conditions are met:
   *
-  * 1. Redistribution of source code must retain the above copyright notice, 
+  * 1. Redistribution of source code must retain the above copyright notice,
   *    this list of conditions and the following disclaimer.
   * 2. Redistributions in binary form must reproduce the above copyright notice,
   *    this list of conditions and the following disclaimer in the documentation
   *    and/or other materials provided with the distribution.
-  * 3. Neither the name of STMicroelectronics nor the names of other 
-  *    contributors to this software may be used to endorse or promote products 
+  * 3. Neither the name of STMicroelectronics nor the names of other
+  *    contributors to this software may be used to endorse or promote products
   *    derived from this software without specific written permission.
-  * 4. This software, including modifications and/or derivative works of this 
+  * 4. This software, including modifications and/or derivative works of this
   *    software, must execute solely and exclusively on microcontroller or
   *    microprocessor devices manufactured by or for STMicroelectronics.
-  * 5. Redistribution and use of this software other than as permitted under 
-  *    this license is void and will automatically terminate your rights under 
-  *    this license. 
+  * 5. Redistribution and use of this software other than as permitted under
+  *    this license is void and will automatically terminate your rights under
+  *    this license.
   *
-  * THIS SOFTWARE IS PROVIDED BY STMICROELECTRONICS AND CONTRIBUTORS "AS IS" 
-  * AND ANY EXPRESS, IMPLIED OR STATUTORY WARRANTIES, INCLUDING, BUT NOT 
-  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
+  * THIS SOFTWARE IS PROVIDED BY STMICROELECTRONICS AND CONTRIBUTORS "AS IS"
+  * AND ANY EXPRESS, IMPLIED OR STATUTORY WARRANTIES, INCLUDING, BUT NOT
+  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
   * PARTICULAR PURPOSE AND NON-INFRINGEMENT OF THIRD PARTY INTELLECTUAL PROPERTY
-  * RIGHTS ARE DISCLAIMED TO THE FULLEST EXTENT PERMITTED BY LAW. IN NO EVENT 
+  * RIGHTS ARE DISCLAIMED TO THE FULLEST EXTENT PERMITTED BY LAW. IN NO EVENT
   * SHALL STMICROELECTRONICS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
   * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, 
-  * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
-  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
+  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
+  * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
   * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
   * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   *
   ******************************************************************************
   */
-/* USER CODE BEGIN firstSection */ 
+/* USER CODE BEGIN firstSection */
 /* can be used to modify / undefine following code or add new definitions */
-/* USER CODE END firstSection */ 
+/* USER CODE END firstSection */
 
 /* Includes ------------------------------------------------------------------*/
 #include "ff_gen_drv.h"
@@ -132,22 +132,38 @@ DSTATUS SDRAMDISK_status(BYTE lun)
   * @param  count: Number of sectors to read (1..128)
   * @retval DRESULT: Operation result
   */
-DRESULT SDRAMDISK_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
-{
-  uint32_t *pSrcBuffer = (uint32_t *)buff;
-  uint32_t BufferSize = (BLOCK_SIZE * count)/4;
-  uint32_t *pSdramAddress = (uint32_t *) (SDRAM_DEVICE_ADDR + (sector * BLOCK_SIZE));
-
-  for(; BufferSize != 0; BufferSize--)
-  {
-    *pSrcBuffer++ = *(__IO uint32_t *)pSdramAddress++;
-  }
-
-  return RES_OK;
-}
-
+//DRESULT SDRAMDISK_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
+//{
+//  uint32_t *pSrcBuffer = (uint32_t *)buff;
+//  uint32_t BufferSize = (BLOCK_SIZE * count)/4;
+//  uint32_t *pSdramAddress = (uint32_t *) (SDRAM_DEVICE_ADDR + (sector * BLOCK_SIZE));
+//
+//  for(; BufferSize != 0; BufferSize--)
+//  {
+//    *pSrcBuffer++ = *(__IO uint32_t *)pSdramAddress++;
+//  }
+//
+//  return RES_OK;
+//}
 /* USER CODE BEGIN beforeWriteSection */
 /* can be used to modify previous code / undefine following code / add new code */
+
+//TV: Moved to user code because changes
+DRESULT SDRAMDISK_read(BYTE lun, BYTE *buff, DWORD sector, UINT count) {
+	uint32_t *pSrcBuffer = (uint32_t *) &buff;
+	uint32_t BufferSize = (BLOCK_SIZE * count) / 4;
+	uint32_t *pSdramAddress = (uint32_t *) (SDRAM_DISK_ADDR
+			+ (sector * BLOCK_SIZE));
+
+	uint8_t RES_OK;
+
+	//TV: uint32_t *pSdramAddress = (uint32_t *) (SDRAM_DEVICE_ADDR + (sector * BLOCK_SIZE));
+	RES_OK = BSP_SDRAM_ReadData((uint32_t) pSdramAddress,
+			(uint32_t *) *pSrcBuffer, BufferSize);
+
+	return RES_OK;
+}
+
 /* USER CODE END beforeWriteSection */
 
 /**
@@ -158,24 +174,46 @@ DRESULT SDRAMDISK_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
   * @param  count: Number of sectors to write (1..128)
   * @retval DRESULT: Operation result
   */
+//#if _USE_WRITE == 1
+//DRESULT SDRAMDISK_write(BYTE lun, const BYTE *buff, DWORD sector, UINT count)
+//{
+//  uint32_t *pDstBuffer = (uint32_t *)buff;
+//  uint32_t BufferSize = (BLOCK_SIZE * count)/4;
+//  uint32_t *pSramAddress = (uint32_t *) (SDRAM_DEVICE_ADDR + (sector * BLOCK_SIZE));
+//
+//  for(; BufferSize != 0; BufferSize--)
+//  {
+//    *(__IO uint32_t *)pSramAddress++ = *pDstBuffer++;
+//  }
+//
+//  return RES_OK;
+//}
+//#endif /* _USE_WRITE == 1 */
+/* USER CODE BEGIN beforeIoctlSection */
+/* can be used to modify previous code / undefine following code / add new code */
+
+//TV: Moved to user code because changes
 #if _USE_WRITE == 1
-DRESULT SDRAMDISK_write(BYTE lun, const BYTE *buff, DWORD sector, UINT count)
-{
-  uint32_t *pDstBuffer = (uint32_t *)buff;
-  uint32_t BufferSize = (BLOCK_SIZE * count)/4;
-  uint32_t *pSramAddress = (uint32_t *) (SDRAM_DEVICE_ADDR + (sector * BLOCK_SIZE));
+DRESULT SDRAMDISK_write(BYTE lun, const BYTE *buff, DWORD sector, UINT count) {
+	uint32_t *pDstBuffer = (uint32_t *) &buff;
+	uint32_t BufferSize = (BLOCK_SIZE * count) / 4;
+	uint32_t *pSramAddress = (uint32_t *) (SDRAM_DISK_ADDR
+			+ (sector * BLOCK_SIZE));
 
-  for(; BufferSize != 0; BufferSize--)
-  {
-    *(__IO uint32_t *)pSramAddress++ = *pDstBuffer++;
-  }
+	uint8_t RES_OK;
 
-  return RES_OK;
+	//TV: uint32_t *pSramAddress = (uint32_t *) (SDRAM_DEVICE_ADDR + (sector * BLOCK_SIZE));
+	RES_OK = BSP_SDRAM_WriteData((uint32_t) pSramAddress,
+			(uint32_t *) *pDstBuffer, BufferSize);
+
+	//for (; BufferSize != 0; BufferSize--) {
+	//	*(__IO uint32_t *) pSramAddress++ = *pDstBuffer++;
+	//}
+
+	return RES_OK;
 }
 #endif /* _USE_WRITE == 1 */
 
-/* USER CODE BEGIN beforeIoctlSection */
-/* can be used to modify previous code / undefine following code / add new code */
 /* USER CODE END beforeIoctlSection */
 
 /**
@@ -185,49 +223,89 @@ DRESULT SDRAMDISK_write(BYTE lun, const BYTE *buff, DWORD sector, UINT count)
   * @param  *buff: Buffer to send/receive control data
   * @retval DRESULT: Operation result
   */
+//#if _USE_IOCTL == 1
+//DRESULT SDRAMDISK_ioctl(BYTE lun, BYTE cmd, void *buff)
+//{
+//  DRESULT res = RES_ERROR;
+//
+//  if (Stat & STA_NOINIT) return RES_NOTRDY;
+//
+//  switch (cmd)
+//  {
+//  /* Make sure that no pending write process */
+//  case CTRL_SYNC :
+//    res = RES_OK;
+//    break;
+//
+//  /* Get number of sectors on the disk (DWORD) */
+//  case GET_SECTOR_COUNT :
+//    *(DWORD*)buff = SDRAM_DEVICE_SIZE / BLOCK_SIZE;
+//    res = RES_OK;
+//    break;
+//
+//  /* Get R/W sector size (WORD) */
+//  case GET_SECTOR_SIZE :
+//    *(WORD*)buff = BLOCK_SIZE;
+//    res = RES_OK;
+//    break;
+//
+//  /* Get erase block size in unit of sector (DWORD) */
+//  case GET_BLOCK_SIZE :
+//    *(DWORD*)buff = 1;
+//	res = RES_OK;
+//    break;
+//
+//  default:
+//    res = RES_PARERR;
+//  }
+//
+//  return res;
+//}
+//#endif /* _USE_IOCTL == 1 */
+/* USER CODE BEGIN lastSection */
+/* can be used to modify / undefine previous code or add new code */
+
+//TV: Moved to user code because changes
 #if _USE_IOCTL == 1
-DRESULT SDRAMDISK_ioctl(BYTE lun, BYTE cmd, void *buff)
-{
-  DRESULT res = RES_ERROR;
+DRESULT SDRAMDISK_ioctl(BYTE lun, BYTE cmd, void *buff) {
+	DRESULT res = RES_ERROR;
 
-  if (Stat & STA_NOINIT) return RES_NOTRDY;
+	if (Stat & STA_NOINIT)
+		return RES_NOTRDY;
 
-  switch (cmd)
-  {
-  /* Make sure that no pending write process */
-  case CTRL_SYNC :
-    res = RES_OK;
-    break;
+	switch (cmd) {
+	/* Make sure that no pending write process */
+	case CTRL_SYNC:
+		res = RES_OK;
+		break;
 
-  /* Get number of sectors on the disk (DWORD) */
-  case GET_SECTOR_COUNT :
-    *(DWORD*)buff = SDRAM_DEVICE_SIZE / BLOCK_SIZE;
-    res = RES_OK;
-    break;
+		/* Get number of sectors on the disk (DWORD) */
+	case GET_SECTOR_COUNT:
+		*(DWORD*) buff = SDRAM_DISK_SIZE / BLOCK_SIZE;
+		res = RES_OK;
+		break;
 
-  /* Get R/W sector size (WORD) */
-  case GET_SECTOR_SIZE :
-    *(WORD*)buff = BLOCK_SIZE;
-    res = RES_OK;
-    break;
+		/* Get R/W sector size (WORD) */
+	case GET_SECTOR_SIZE:
+		*(WORD*) buff = BLOCK_SIZE;
+		res = RES_OK;
+		break;
 
-  /* Get erase block size in unit of sector (DWORD) */
-  case GET_BLOCK_SIZE :
-    *(DWORD*)buff = 1;
-	res = RES_OK;
-    break;
+		/* Get erase block size in unit of sector (DWORD) */
+	case GET_BLOCK_SIZE:
+		*(DWORD*) buff = 1;
+		res = RES_OK;
+		break;
 
-  default:
-    res = RES_PARERR;
-  }
+	default:
+		res = RES_PARERR;
+	}
 
-  return res;
+	return res;
 }
 #endif /* _USE_IOCTL == 1 */
 
-/* USER CODE BEGIN lastSection */ 
-/* can be used to modify / undefine previous code or add new code */
-/* USER CODE END lastSection */ 
-  
+/* USER CODE END lastSection */
+
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
 

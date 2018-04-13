@@ -94,6 +94,7 @@ osThreadId STEMWINTaskHandle;
 
 LTDC_HandleTypeDef hltdc;
 DMA2D_HandleTypeDef hdma2d;
+SDRAM_HandleTypeDef hsdram1;
 
 FATFS SDRAMFatFs;
 FIL MyFile;
@@ -166,11 +167,6 @@ UINT sz_buff /* Size of the working buffer in unit of byte */
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
-	FRESULT res; /* FatFs function common result code */
-	uint32_t byteswritten, bytesread; /* File write/read counts */
-	uint8_t wtext[] = "This is STM32 working with FatFs"; /* File write buffer */
-	uint8_t rtext[100]; /* File read buffer */
 
 	/* Enable I-Cache-------------------------------------------------------------*/
 	SCB_EnableICache();
@@ -962,20 +958,27 @@ void *pvPortRealloc(void *pv, size_t size) {
 /* StartDefaultTask function */
 void StartDefaultTask(void const * argument)
 {
-  /* init code for FATFS */
-  MX_FATFS_Init();
 
-  /* init code for USB_DEVICE */
-  MX_USB_DEVICE_Init();
+	FRESULT res; /* FatFs function common result code */
+	uint32_t byteswritten, bytesread; /* File write/read counts */
+	uint8_t wtext[] = "This is STM32 working with FatFs"; /* File write buffer */
+	uint8_t rtext[100]; /* File read buffer */
 
-/* Graphic application */
-  GRAPHICS_MainTask();
 
-  /* USER CODE BEGIN 5 */
+	/* init code for FATFS */
+	MX_FATFS_Init();
+
+	/* init code for USB_DEVICE */
+	MX_USB_DEVICE_Init();
+
+	/* Graphic application */
+	GRAPHICS_MainTask();
+
+	/* USER CODE BEGIN 5 */
 
 	// Start SDRAM
 	FMC_SDRAM_CommandTypeDef hsdram1Command;
-	BSP_SDRAM_Initialization_Sequence(&hsdram1, &hsdram1Command);
+	MX_SDRAM_InitEx();
 
 	// Start LCD
 	BSP_LCD_Init();
