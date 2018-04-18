@@ -1,2 +1,2 @@
-WindowMainDLG.c:100:13:_cbDialog	24	static
-WindowMainDLG.c:390:9:CreateWindowMain	16	static
+WindowMainDLG.c:100:13:_cbDialog	40	static
+WindowMainDLG.c:390:9:CreateWindowMain	24	static

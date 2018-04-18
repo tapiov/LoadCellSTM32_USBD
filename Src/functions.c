@@ -55,6 +55,24 @@ char *myPrintf(float source) {
 	return Display;
 }
 
+void MY_LCD_DisplayStringAtLine(uint16_t Line, uint8_t *ptr, uint8_t mode) {
+
+	switch (mode) {
+	case 1:
+		BSP_LCD_DisplayStringAt(0, LINE(Line), ptr, LEFT_MODE);
+		break;
+	case 2:
+		BSP_LCD_DisplayStringAt(0, LINE(Line), ptr, CENTER_MODE);
+		break;
+	case 3:
+		BSP_LCD_DisplayStringAt(0, LINE(Line), ptr, RIGHT_MODE);
+		break;
+	default:
+		BSP_LCD_DisplayStringAt(0, LINE(Line), ptr, CENTER_MODE);
+		break;
+	}
+}
+
 void initArray(Array *a, size_t initialSize) {
 	a->array = (uint16_t *) pvPortMalloc(initialSize * sizeof(uint16_t));
 	a->used = 0;

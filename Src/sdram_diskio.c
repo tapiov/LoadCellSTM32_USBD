@@ -145,6 +145,7 @@ DSTATUS SDRAMDISK_status(BYTE lun)
 //
 //  return RES_OK;
 //}
+
 /* USER CODE BEGIN beforeWriteSection */
 /* can be used to modify previous code / undefine following code / add new code */
 
@@ -189,6 +190,7 @@ DRESULT SDRAMDISK_read(BYTE lun, BYTE *buff, DWORD sector, UINT count) {
 //  return RES_OK;
 //}
 //#endif /* _USE_WRITE == 1 */
+
 /* USER CODE BEGIN beforeIoctlSection */
 /* can be used to modify previous code / undefine following code / add new code */
 
@@ -262,6 +264,7 @@ DRESULT SDRAMDISK_write(BYTE lun, const BYTE *buff, DWORD sector, UINT count) {
 //  return res;
 //}
 //#endif /* _USE_IOCTL == 1 */
+
 /* USER CODE BEGIN lastSection */
 /* can be used to modify / undefine previous code or add new code */
 

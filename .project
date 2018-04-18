@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
 	<name>LoadCellSTM32_USBD</name>
-	<comment></comment>
+	<comment />
 	<projects>
 	</projects>
 	<buildSpec>
@@ -15,7 +15,7 @@
 				</dictionary>
 				<dictionary>
 					<key>?name?</key>
-					<value></value>
+					<value />
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.append_environment</key>
@@ -23,7 +23,7 @@
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.buildArguments</key>
-					<value></value>
+					<value />
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.buildCommand</key>
@@ -122,16 +122,6 @@
 			<location>C:/Users/tapio/STM32Cube/STM32Cube_FW_F7_V1.11.0/Middlewares/ST/STM32_USB_Device_Library</location>
 		</link>
 		<link>
-			<name>Middlewares/STemWin</name>
-			<type>2</type>
-			<locationURI>virtual:/virtual</locationURI>
-		</link>
-		<link>
-			<name>STemWin/Lib</name>
-			<type>2</type>
-			<location>C:/Users/tapio/STM32Cube/STM32Cube_FW_F7_V1.11.0/Middlewares/ST/STemWin/Lib</location>
-		</link>
-		<link>
 			<name>STemWin/OS</name>
 			<type>2</type>
 			<location>C:/Users/tapio/STM32Cube/STM32Cube_FW_F7_V1.11.0/Middlewares/ST/STemWin/OS</location>
@@ -151,5 +141,9 @@
 			<type>1</type>
 			<location>C:/Users/tapio/STM32Cube/STM32Cube_FW_F7_V1.11.0/Middlewares/ST/STemWin/Software/WindowMainDLG.c</location>
 		</link>
-	</linkedResources>
+	<link>
+			<name>Middlewares/STemWin</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link></linkedResources>
 </projectDescription>

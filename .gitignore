@@ -1,7 +1,4 @@
-**/Debug/
-**/Release/
-Debug/
-Release/
+Debug/**
+Release/**
 *.o
 *.su
-

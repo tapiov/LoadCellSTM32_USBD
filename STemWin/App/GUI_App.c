@@ -46,14 +46,11 @@
 #include "GUI.h"
 
 #include "DIALOG.h"
-//extern  WM_HWIN CreateFramewin(void);
-extern WM_HWIN CreateWindowMain(void);
-extern WM_HWIN CreateWindowGraph(void);
+extern  WM_HWIN CreateFramewin(void);
 
 
 void GRAPHICS_MainTask(void) {
   /* 1- Create a FrameWin using GUIBuilder */
-	// CreateFramewin();
 	CreateWindowMain();
 /* USER CODE BEGIN GRAPHICS_MainTask */
  /* User can implement his graphic application here */
