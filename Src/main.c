@@ -81,10 +81,12 @@ ADC_HandleTypeDef hadc3;
 
 CRC_HandleTypeDef hcrc;
 
-TIM_HandleTypeDef htim1;
+TIM_HandleTypeDef htim2;
+TIM_HandleTypeDef htim3;
 
 UART_HandleTypeDef huart1;
 
+DMA_HandleTypeDef hdma_memtomem_dma2_stream0;
 osThreadId defaultTaskHandle;
 osThreadId USBDTaskHandle;
 osThreadId STEMWINTaskHandle;
@@ -113,13 +115,15 @@ const Diskio_drvTypeDef SDRAMDISK_Driver;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_ADC3_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_CRC_Init(void);
 extern void GRAPHICS_HW_Init(void);
 extern void GRAPHICS_Init(void);
 extern void GRAPHICS_MainTask(void);
-static void MX_TIM1_Init(void);
+static void MX_TIM2_Init(void);
+static void MX_TIM3_Init(void);
 void StartDefaultTask(void const * argument);
 void StartUSBDTask(void const * argument);
 void StartSTEMWINTask(void const * argument);
@@ -201,21 +205,61 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_ADC3_Init();
   MX_USART1_UART_Init();
   MX_CRC_Init();
-  MX_TIM1_Init();
+  MX_TIM2_Init();
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
-
 
   /* USER CODE END 2 */
 
-/* Initialise the graphical hardware */
-  GRAPHICS_HW_Init();
+	/* Initialise the graphical hardware */
+	GRAPHICS_HW_Init();
 
-  /* Initialise the graphical stack engine */
-  GRAPHICS_Init();
+	/* Initialise the graphical stack engine */
+	GRAPHICS_Init();
 
+	/* init code for FATFS */
+	MX_FATFS_Init();
+
+	/* USER CODE BEGIN 5 */
+
+	HAL_Delay(1000);
+
+	// Initialize SDRAM FATFS
+	printf("Format SDRAM disk ... \r\n");
+	//if (FATFS_LinkDriver(&SDRAMDISK_Driver, SDRAMPath) == 0) {
+	//	printf("	SDRAM FATFS link Success \r\n");
+	//}
+	// Register the file system object to the FatFs module
+	if (f_mount(&SDRAMFatFs, (TCHAR const*) SDRAMPath, 0) != FR_OK) {
+		// FatFs Initialization Error
+		_Error_Handler(__FILE__, __LINE__);
+	} else {
+		printf("	SDRAM FATFS mount Success \r\n");
+	}
+	// Create a FAT file system (format) on the logical drive
+	if (f_mkfs((TCHAR const*) SDRAMPath, FM_FAT32, 0, workBuffer,
+			sizeof(workBuffer)) != FR_OK) {
+		// FatFs Format Error
+		_Error_Handler(__FILE__, __LINE__);
+	} else {
+		printf("Format SDRAM disk done OK \r\n");
+	}
+
+	HAL_Delay(1000);
+
+	// Unlink the SDRAM disk I/O driver
+	// FATFS_UnLinkDriver(SDRAMPath);
+
+	printf("Initializing USB MSC \r\n");
+
+	/* init code for USB_DEVICE */
+	MX_USB_DEVICE_Init();
+
+	printf("Initialized \r\n");
 
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -236,12 +280,12 @@ int main(void)
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* definition and creation of USBDTask */
-  osThreadDef(USBDTask, StartUSBDTask, osPriorityNormal, 0, 1024);
-  USBDTaskHandle = osThreadCreate(osThread(USBDTask), NULL);
+	//osThreadDef(USBDTask, StartUSBDTask, osPriorityNormal, 0, 1024);
+	//USBDTaskHandle = osThreadCreate(osThread(USBDTask), NULL);
 
   /* definition and creation of STEMWINTask */
-  osThreadDef(STEMWINTask, StartSTEMWINTask, osPriorityNormal, 0, 1024);
-  STEMWINTaskHandle = osThreadCreate(osThread(STEMWINTask), NULL);
+	//osThreadDef(STEMWINTask, StartSTEMWINTask, osPriorityNormal, 0, 1024);
+	//STEMWINTaskHandle = osThreadCreate(osThread(STEMWINTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
 	/* add threads, ... */
@@ -404,35 +448,66 @@ static void MX_CRC_Init(void)
 
 }
 
-/* TIM1 init function */
-static void MX_TIM1_Init(void)
+/* TIM2 init function */
+static void MX_TIM2_Init(void)
 {
 
   TIM_ClockConfigTypeDef sClockSourceConfig;
   TIM_MasterConfigTypeDef sMasterConfig;
 
-  htim1.Instance = TIM1;
-  htim1.Init.Prescaler = 100;
-  htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim1.Init.Period = 0;
-  htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim1.Init.RepetitionCounter = 0;
-  htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-  if (HAL_TIM_Base_Init(&htim1) != HAL_OK)
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 100;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 0;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
 
   sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
-  if (HAL_TIM_ConfigClockSource(&htim1, &sClockSourceConfig) != HAL_OK)
+  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
 
   sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-  sMasterConfig.MasterOutputTrigger2 = TIM_TRGO2_RESET;
   sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  if (HAL_TIMEx_MasterConfigSynchronization(&htim1, &sMasterConfig) != HAL_OK)
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
+
+}
+
+/* TIM3 init function */
+static void MX_TIM3_Init(void)
+{
+
+  TIM_ClockConfigTypeDef sClockSourceConfig;
+  TIM_MasterConfigTypeDef sMasterConfig;
+
+  htim3.Instance = TIM3;
+  htim3.Init.Prescaler = 100;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim3.Init.Period = 0;
+  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
+
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
+
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
@@ -460,6 +535,37 @@ static void MX_USART1_UART_Init(void)
 
 }
 
+/**
+  * Enable DMA controller clock
+  * Configure DMA for memory to memory transfers
+  *   hdma_memtomem_dma2_stream0
+  */
+static void MX_DMA_Init(void)
+{
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA2_CLK_ENABLE();
+
+  /* Configure DMA request hdma_memtomem_dma2_stream0 on DMA2_Stream0 */
+  hdma_memtomem_dma2_stream0.Instance = DMA2_Stream0;
+  hdma_memtomem_dma2_stream0.Init.Channel = DMA_CHANNEL_0;
+  hdma_memtomem_dma2_stream0.Init.Direction = DMA_MEMORY_TO_MEMORY;
+  hdma_memtomem_dma2_stream0.Init.PeriphInc = DMA_PINC_ENABLE;
+  hdma_memtomem_dma2_stream0.Init.MemInc = DMA_MINC_ENABLE;
+  hdma_memtomem_dma2_stream0.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+  hdma_memtomem_dma2_stream0.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+  hdma_memtomem_dma2_stream0.Init.Mode = DMA_NORMAL;
+  hdma_memtomem_dma2_stream0.Init.Priority = DMA_PRIORITY_LOW;
+  hdma_memtomem_dma2_stream0.Init.FIFOMode = DMA_FIFOMODE_ENABLE;
+  hdma_memtomem_dma2_stream0.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_FULL;
+  hdma_memtomem_dma2_stream0.Init.MemBurst = DMA_MBURST_SINGLE;
+  hdma_memtomem_dma2_stream0.Init.PeriphBurst = DMA_PBURST_SINGLE;
+  if (HAL_DMA_Init(&hdma_memtomem_dma2_stream0) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
+
+}
+
 /** Configure pins as
         * Analog
         * Input
@@ -470,10 +576,8 @@ static void MX_USART1_UART_Init(void)
      PG14   ------> ETH_TXD1
      PB8   ------> I2C1_SCL
      PB5   ------> USB_OTG_HS_ULPI_D7
-     PB4   ------> S_TIM3_CH1
      PD7   ------> SPDIFRX_IN0
      PC12   ------> SDMMC1_CK
-     PA15   ------> S_TIM2_CH1_ETR
      PE5   ------> DCMI_D6
      PE6   ------> DCMI_D7
      PG13   ------> ETH_TXD0
@@ -494,6 +598,7 @@ static void MX_USART1_UART_Init(void)
      PH14   ------> DCMI_D4
      PI0   ------> S_TIM5_CH4
      PC9   ------> SDMMC1_D1
+     PA8   ------> S_TIM1_CH1
      PC8   ------> SDMMC1_D0
      PC7   ------> USART6_RX
      PH4   ------> USB_OTG_HS_ULPI_NXT
@@ -603,14 +708,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Alternate = GPIO_AF10_OTG_HS;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : ARDUINO_PWM_D3_Pin */
-  GPIO_InitStruct.Pin = ARDUINO_PWM_D3_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  GPIO_InitStruct.Alternate = GPIO_AF2_TIM3;
-  HAL_GPIO_Init(ARDUINO_PWM_D3_GPIO_Port, &GPIO_InitStruct);
-
   /*Configure GPIO pin : SPDIF_RX0_Pin */
   GPIO_InitStruct.Pin = SPDIF_RX0_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
@@ -628,14 +725,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   GPIO_InitStruct.Alternate = GPIO_AF12_SDMMC1;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : ARDUINO_PWM_D9_Pin */
-  GPIO_InitStruct.Pin = ARDUINO_PWM_D9_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  GPIO_InitStruct.Alternate = GPIO_AF1_TIM2;
-  HAL_GPIO_Init(ARDUINO_PWM_D9_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : DCMI_D6_Pin DCMI_D7_Pin */
   GPIO_InitStruct.Pin = DCMI_D6_Pin|DCMI_D7_Pin;
@@ -776,6 +865,14 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   GPIO_InitStruct.Alternate = GPIO_AF2_TIM5;
   HAL_GPIO_Init(ARDUINO_PWM_CS_D10_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : ARDUINO_PWM_D5_Pin */
+  GPIO_InitStruct.Pin = ARDUINO_PWM_D5_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.Alternate = GPIO_AF1_TIM1;
+  HAL_GPIO_Init(ARDUINO_PWM_D5_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : LCD_INT_Pin */
   GPIO_InitStruct.Pin = LCD_INT_Pin;
@@ -968,61 +1065,38 @@ void *pvPortRealloc(void *pv, size_t size) {
 /* StartDefaultTask function */
 void StartDefaultTask(void const * argument)
 {
-	/* init code for FATFS */
-	MX_FATFS_Init();
-
-	/* init code for USB_DEVICE */
-	MX_USB_DEVICE_Init();
-
-	/* Graphic application */
-	//GRAPHICS_MainTask();
-
-	/* USER CODE BEGIN 5 */
-
-	// Start LCD
-	BSP_LCD_Init();
-	BSP_LCD_LayerDefaultInit(0, LCD_FB_START_ADDRESS);
-	BSP_LCD_SelectLayer(0);
-	BSP_LCD_DisplayOn();
-	BSP_LCD_Clear(LCD_COLOR_WHITE);
-	BSP_LCD_SetBackColor(LCD_COLOR_WHITE);
-	BSP_LCD_SetTextColor(LCD_COLOR_BLUE);
-	BSP_LCD_SetFont(&Font24);
-	BSP_LCD_GetFont();
-	MY_LCD_DisplayStringAtLine(5, "Starting ...", 2);
-	HAL_Delay(3000);
-	BSP_LCD_Clear(LCD_COLOR_BLUE);
-	BSP_LCD_SetBackColor(LCD_COLOR_BLUE);
-	BSP_LCD_SetTextColor(LCD_COLOR_WHITE);
-	MY_LCD_DisplayStringAtLine(5, "Starting ...", 2);
-	HAL_Delay(3000);
-	BSP_LCD_Clear(LCD_COLOR_BLACK);
-	BSP_LCD_SetBackColor(LCD_COLOR_BLACK);
-	BSP_LCD_SetTextColor(LCD_COLOR_WHITE);
-
-	// Initialize SDRAM FATFS
-	printf("Format SDRAM disk ... \r\n");
-	//if (FATFS_LinkDriver(&SDRAMDISK_Driver, SDRAMPath) == 0) {
-	//	printf("	SDRAM FATFS link Success \r\n");
-	//}
-	// Register the file system object to the FatFs module
-	if (f_mount(&SDRAMFatFs, (TCHAR const*) SDRAMPath, 0) != FR_OK) {
-		// FatFs Initialization Error
-		_Error_Handler(__FILE__, __LINE__);
-	} else {
-		printf("	SDRAM FATFS mount Success \r\n");
-	}
-	// Create a FAT file system (format) on the logical drive
-	if (f_mkfs((TCHAR const*) SDRAMPath, FM_FAT32, 0, workBuffer,
-			sizeof(workBuffer)) != FR_OK) {
-		// FatFs Format Error
-		_Error_Handler(__FILE__, __LINE__);
-	} else {
-		printf("Format SDRAM disk done OK \r\n");
-	}
-
-	// Unlink the SDRAM disk I/O driver
-	FATFS_UnLinkDriver(SDRAMPath);
+//  /* init code for FATFS */
+//  MX_FATFS_Init();
+//
+//  /* USER CODE BEGIN 5 */
+//
+//	// Initialize SDRAM FATFS
+//	printf("Format SDRAM disk ... \r\n");
+//	//if (FATFS_LinkDriver(&SDRAMDISK_Driver, SDRAMPath) == 0) {
+//	//	printf("	SDRAM FATFS link Success \r\n");
+//	//}
+//	// Register the file system object to the FatFs module
+//	if (f_mount(&SDRAMFatFs, (TCHAR const*) SDRAMPath, 0) != FR_OK) {
+//		// FatFs Initialization Error
+//		_Error_Handler(__FILE__, __LINE__);
+//	} else {
+//		printf("	SDRAM FATFS mount Success \r\n");
+//	}
+//	// Create a FAT file system (format) on the logical drive
+//	if (f_mkfs((TCHAR const*) SDRAMPath, FM_FAT32, 0, workBuffer,
+//			sizeof(workBuffer)) != FR_OK) {
+//		// FatFs Format Error
+//		_Error_Handler(__FILE__, __LINE__);
+//	} else {
+//		printf("Format SDRAM disk done OK \r\n");
+//	}
+//
+//	// Unlink the SDRAM disk I/O driver
+//	// FATFS_UnLinkDriver(SDRAMPath);
+//
+//	/* init code for USB_DEVICE */
+//	MX_USB_DEVICE_Init();
+//
 
 	int rc;
 	DWORD buff[_MAX_SS]; /* Working buffer (4 sector in size) */
@@ -1052,9 +1126,6 @@ void StartDefaultTask(void const * argument)
 	uint32_t AvgSize = 10;
 	uint32_t Period_us = 100;
 	uint32_t Count_ms = 1000;
-
-	// Clear screen, set it up
-	InitScreen(LCD_COLOR_BLACK, LCD_COLOR_WHITE);
 
 	// Initialize data storage
 	// https://stackoverflow.com/questions/3536153/c-dynamically-growing-array
@@ -1308,11 +1379,33 @@ void StartSTEMWINTask(void const * argument)
 {
   /* USER CODE BEGIN StartSTEMWINTask */
 
+	// Start LCD
+//	BSP_LCD_Init();
+//	BSP_LCD_LayerDefaultInit(0, LCD_FB_START_ADDRESS);
+//	BSP_LCD_SelectLayer(0);
+//	BSP_LCD_DisplayOn();
+//	BSP_LCD_Clear(LCD_COLOR_WHITE);
+//	BSP_LCD_SetBackColor(LCD_COLOR_WHITE);
+//	BSP_LCD_SetTextColor(LCD_COLOR_BLUE);
+//	BSP_LCD_SetFont(&Font24);
+//	BSP_LCD_GetFont();
+//	MY_LCD_DisplayStringAtLine(5, "Starting ...", 2);
+//	HAL_Delay(3000);
+//	BSP_LCD_Clear(LCD_COLOR_BLUE);
+//	BSP_LCD_SetBackColor(LCD_COLOR_BLUE);
+//	BSP_LCD_SetTextColor(LCD_COLOR_WHITE);
+//	MY_LCD_DisplayStringAtLine(5, "Starting ...", 2);
+//	HAL_Delay(3000);
+//	BSP_LCD_Clear(LCD_COLOR_BLACK);
+//	BSP_LCD_SetBackColor(LCD_COLOR_BLACK);
+//	BSP_LCD_SetTextColor(LCD_COLOR_WHITE);
+
 	/* Graphic application */
 	GRAPHICS_MainTask();
 
 	/* Infinite loop */
 	for (;;) {
+
 		osDelay(1);
 	}
   /* USER CODE END StartSTEMWINTask */
@@ -1320,7 +1413,7 @@ void StartSTEMWINTask(void const * argument)
 
 /**
   * @brief  Period elapsed callback in non blocking mode
-  * @note   This function is called  when TIM2 interrupt took place, inside
+  * @note   This function is called  when TIM1 interrupt took place, inside
   * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
   * a global variable "uwTick" used as application time base.
   * @param  htim : TIM handle
@@ -1331,7 +1424,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   /* USER CODE BEGIN Callback 0 */
 
   /* USER CODE END Callback 0 */
-  if (htim->Instance == TIM2) {
+  if (htim->Instance == TIM1) {
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */

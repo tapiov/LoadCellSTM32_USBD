@@ -46,7 +46,7 @@
 #include "GUI.h"
 
 #include "DIALOG.h"
-extern  WM_HWIN CreateFramewin(void);
+extern WM_HWIN CreateWindowMain(void);
 
 
 void GRAPHICS_MainTask(void) {
